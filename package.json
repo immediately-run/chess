@@ -1,10 +1,11 @@
 {
-  "name": "immediately-run-app",
+  "name": "chess",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "immediately.run": {
-    "$schema": "https://immediately.run/immediately-run-config.schema.json"
+    "$schema": "https://immediately.run/immediately-run-config.schema.json",
+    "requireLatest": "optimistic"
   },
   "scripts": {
     "dev": "vite",
@@ -13,7 +14,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@immediately-run/sdk": "^0.13.0",
+    "@immediately-run/sdk": "0.54.0",
+    "chess.js": "1.4.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },
@@ -32,5 +34,6 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^8.0.9"
-  }
+  },
+  "description": "Correspondence chess without a server: every move is a file in a shared space. Play a friend, or the built-in engine"
 }
