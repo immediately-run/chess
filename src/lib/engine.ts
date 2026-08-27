@@ -1,8 +1,8 @@
 // A small chess engine: negamax with alpha-beta over material + piece-square
 // tables. The root loop yields to the event loop between root moves (setTimeout)
 // so the UI never freezes — no Web Workers (they don't exist in the sandbox).
-import { Chess } from 'chess.js';
-import type { Move } from 'chess.js';
+import { Chess } from '../vendor/chess';
+import type { Move } from '../vendor/chess';
 import type { Color, EngineLevel } from './types';
 
 export interface EngineMove {

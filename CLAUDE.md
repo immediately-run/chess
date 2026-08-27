@@ -5,8 +5,11 @@ plus a built-in engine for solo play. See `README.md` for the file layout and
 the multi-user rules. Code map: `src/lib/store.ts` (fs + spaces), `src/lib/games.ts`
 (on-disk game layout), `src/lib/rules.ts` (status derivation on chess.js),
 `src/lib/engine.ts` (chunked negamax), hooks in `src/hooks/`, one component per
-file in `src/components/`. `chess.js` is the only non-platform dependency and is
-pinned exactly (the engine reaches into its private move generator for speed).
+file in `src/components/`. `chess.js` 1.4.0 is the only non-platform dependency and is
+VENDORED at `src/vendor/chess.js` (+ `chess.d.ts`) with every BigInt literal
+rewritten to `BigInt("…")` — the sandbox transpile turns `return 0n` into
+`return0n` for node_modules code. Upgrade by re-copying `dist/esm/chess.js` and
+re-applying that rewrite (the engine reaches into its private move generator).
 
 This is an **immediately.run app**: React + TypeScript that loads from GitHub and
 transpiles in the browser (no server, no build step at runtime). Keep the rules

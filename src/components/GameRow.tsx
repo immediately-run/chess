@@ -28,7 +28,7 @@ function GameRow({ game, me, onOpen, onDelete }: Props) {
     action = 'Review';
   } else if (claim) {
     chip = { text: 'Open seat', cls: 'chip chip-open' };
-    action = `Join as ${claim === 'w' ? 'White' : 'Black'}`;
+    action = `Open to join as ${claim === 'w' ? 'White' : 'Black'}`;
   } else if (mine) {
     chip = { text: 'Your move', cls: 'chip chip-hot' };
     action = 'Play';

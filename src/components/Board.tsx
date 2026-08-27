@@ -4,6 +4,7 @@ import type { Color } from '../lib/types';
 
 const FILES = 'abcdefgh';
 const S = 100; // square side in SVG units
+const PIECE_NAME: Record<PieceType, string> = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
 export interface LegalTarget {
   to: string;
@@ -58,6 +59,7 @@ function Board({ fen, orientation, selected, targets, lastMove, check, interacti
     return { x: x * S, y: y * S };
   };
   const pieces = parse(fen);
+  const pieceAt = new Map(pieces.map((p) => [p.square, p]));
   const targetMap = new Map(targets.map((t) => [t.to, t.capture]));
 
   const squares: { name: string; dark: boolean }[] = [];
@@ -79,23 +81,37 @@ function Board({ fen, orientation, selected, targets, lastMove, check, interacti
         if (selected === name) cls.push('sq-selected');
         else if (lastMove && (lastMove.from === name || lastMove.to === name)) cls.push('sq-last');
         if (check === name) cls.push('sq-check');
+        const p = pieceAt.get(name);
+        const label = p ? `${name}, ${p.color === 'w' ? 'white' : 'black'} ${PIECE_NAME[p.type]}` : name;
+        // Squares are buttons with NO child text: a square group that also holds a
+        // coordinate <text> is dropped from the a11y tree in favour of the text.
         return (
-          <g key={name} className={cls.join(' ')} onClick={() => onTap(name)} role="gridcell" aria-label={name}>
+          <g key={name} className={cls.join(' ')} onClick={() => onTap(name)} role="button" aria-label={label}>
             <rect x={x} y={y} width={S} height={S} />
             {check === name && <rect x={x} y={y} width={S} height={S} className="sq-check-wash" />}
-            {name[1] === String(bottomRank) && (
-              <text className="coord" x={x + S - 8} y={y + S - 7} textAnchor="end">
-                {name[0]}
-              </text>
-            )}
-            {name[0] === leftFile && (
-              <text className="coord" x={x + 7} y={y + 22}>
-                {name[1]}
-              </text>
-            )}
           </g>
         );
       })}
+      {squares
+        .filter(({ name }) => name[1] === String(bottomRank) || name[0] === leftFile)
+        .map(({ name, dark }) => {
+          const { x, y } = pos(name);
+          const cls = `coord${dark ? ' coord-dark' : ''}`;
+          return (
+            <g key={`coord-${name}`} aria-hidden>
+              {name[1] === String(bottomRank) && (
+                <text className={cls} x={x + S - 8} y={y + S - 7} textAnchor="end">
+                  {name[0]}
+                </text>
+              )}
+              {name[0] === leftFile && (
+                <text className={cls} x={x + 7} y={y + 22}>
+                  {name[1]}
+                </text>
+              )}
+            </g>
+          );
+        })}
       {pieces.map((p) => {
         const { x, y } = pos(p.square);
         return <Piece key={p.square} type={p.type} color={p.color} x={x} y={y} size={S} />;

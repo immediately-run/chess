@@ -6,7 +6,9 @@ Play a friend, or the built-in engine.
 An example app for [immediately.run](https://immediately.run) — React +
 TypeScript, loaded straight from GitHub and transpiled in the browser. The only
 runtime dependency besides React and the SDK is [chess.js](https://github.com/jhlywa/chess.js)
-(rules, check/mate/draw detection, SAN, PGN, FEN).
+(rules, check/mate/draw detection, SAN, PGN, FEN), vendored as
+`src/vendor/chess.js` with its BigInt literals spelled `BigInt("…")` — the
+immediately.run sandbox mangles `123n` literals inside `node_modules`.
 
 ## Try it
 

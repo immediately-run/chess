@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Chess } from 'chess.js';
-import type { Square } from 'chess.js';
+import { Chess } from '../vendor/chess';
+import type { Square } from '../vendor/chess';
 import Board from './Board';
 import type { LegalTarget } from './Board';
 import Captured from './Captured';
@@ -197,7 +197,7 @@ function GameScreen({ store, id, me, onBack, onRematch }: Props) {
 
   const playerCard = (c: Color) => {
     const name = c === 'w' ? wName : bName;
-    const sub = mode === 'engine' && c === engCol ? LEVELS[level].name : mine.includes(c) && mode !== 'local' ? 'you' : '';
+    const sub = mode === 'engine' && c === engCol ? LEVELS[level].name : mine.includes(c) && mode !== 'local' && name !== 'you' ? 'you' : '';
     return (
       <div className={`player player-${c}${!status.over && turn === c ? ' player-turn' : ''}`}>
         <span className={`swatch swatch-${c}`} aria-hidden />

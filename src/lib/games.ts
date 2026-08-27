@@ -44,13 +44,14 @@ export interface NewGameOptions {
 /** Create a game directory with its `game.json`. Returns the meta. */
 export async function createGame(store: Store, opts: NewGameOptions): Promise<GameMeta> {
   const id = newId();
-  const other: Seat =
-    opts.mode === 'engine' ? ENGINE_SEAT : opts.mode === 'local' ? opts.me : OPEN_SEAT;
+  const other: Seat = opts.mode === 'engine' ? ENGINE_SEAT : OPEN_SEAT;
+  // Pass-the-phone games have no owner per seat: name them by colour.
+  const local = opts.mode === 'local';
   const meta: GameMeta = {
     id,
     mode: opts.mode,
-    white: opts.myColor === 'w' ? opts.me : other,
-    black: opts.myColor === 'b' ? opts.me : other,
+    white: local ? 'White' : opts.myColor === 'w' ? opts.me : other,
+    black: local ? 'Black' : opts.myColor === 'b' ? opts.me : other,
     created: new Date().toISOString(),
     createdBy: opts.me,
     result: null,

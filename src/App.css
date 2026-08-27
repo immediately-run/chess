@@ -162,7 +162,7 @@ h2 { font: 700 clamp(20px, 3vw, 26px)/1.1 var(--disp); letter-spacing: -.02em; m
 .sq-dark.sq-last rect:first-child { fill: color-mix(in oklab, var(--sq-last) 60%, var(--sq-dark)); }
 .sq-check-wash { fill: var(--sq-check); }
 .coord { font: 700 13px var(--mono); fill: rgba(30, 20, 50, .55); pointer-events: none; }
-.sq-dark .coord { fill: rgba(255, 255, 255, .6); }
+.coord-dark { fill: rgba(255, 255, 255, .6); }
 .piece { font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", "Symbola", sans-serif; paint-order: stroke fill; stroke-linejoin: round; }
 .piece-w { fill: var(--piece-w); stroke: var(--piece-w-line); stroke-width: 3; }
 .piece-b { fill: var(--piece-b); stroke: var(--piece-b-line); stroke-width: 2.5; }

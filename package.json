@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@immediately-run/sdk": "0.54.0",
-    "chess.js": "1.4.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },

@@ -1,7 +1,7 @@
 // One game, live: reads its files, polls the shared space for the opponent's
 // writes, and exposes the write actions (move, claim seat, resign, draw).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Chess } from 'chess.js';
+import type { Chess } from '../vendor/chess';
 import { claimSeat, gameDir, movesDir, offerDraw, readGame, resign, withdrawDraw, writeMove } from '../lib/games';
 import { deriveStatus, isMyMove, myColors, openSeatFor, replay } from '../lib/rules';
 import type { Status } from '../lib/rules';

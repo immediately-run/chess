@@ -1,6 +1,6 @@
 // Pure chess helpers on top of chess.js: replaying a game's move files, deriving
 // the result from the files, captured pieces, seat ownership.
-import { Chess } from 'chess.js';
+import { Chess } from '../vendor/chess';
 import type { Color, GameFiles, GameMeta, MoveRecord } from './types';
 import { ENGINE_SEAT, OPEN_SEAT } from './types';
 
