@@ -1,135 +1,94 @@
-# immediately.run — starter template
+# Chess
 
-A ready-to-run starter for building apps on
-[immediately.run](https://immediately.run): React + TypeScript + Vite, wired to
-the brand design system, with the project layout immediately.run expects.
+Correspondence chess without a server: every move is a file in a shared space.
+Play a friend, or the built-in engine.
 
-## Try it instantly
+An example app for [immediately.run](https://immediately.run) — React +
+TypeScript, loaded straight from GitHub and transpiled in the browser. The only
+runtime dependency besides React and the SDK is [chess.js](https://github.com/jhlywa/chess.js)
+(rules, check/mate/draw detection, SAN, PGN, FEN).
 
-Try this template on [immediately.run](https://immediately.run/present/github/immediately-run/new-project-template/main/files/src/App.tsx)
+## Try it
 
-> Using this as a starting point for your own app? After you push to your repo,
-> update the link above to
-> `https://immediately.run/present/github/<owner>/<repo>/<ref>/files/src/App.tsx`.
+Open it on immediately.run:
 
-## Use this template
+<https://immediately.run/present/github/immediately-run/chess/main/files/src/App.tsx>
 
-1. Create a new repo from this template (or copy the files).
-2. `npm install`
-3. `npm run dev` and start editing `src/App.tsx`.
-4. Push to GitHub and open it on immediately.run with the link above.
+- **Play the engine** — three levels (Casual / Club / Strong), play as White,
+  Black or random. The engine is a small negamax search with alpha-beta,
+  material + piece-square tables, and a captures-only quiescence at the top
+  level. It runs in `setTimeout` slices so the page never freezes (the sandbox
+  has no Web Workers).
+- **Two players, one device** — pass the phone; the board turns to face whoever
+  is to move.
+- **Correspondence** — create or open a shared space, start a game as White or
+  Black, and the other seat stays open until a member of the space joins it.
+  Moves land as files; the app polls the space every 3 s while you wait. Resign
+  and draw offers work the same way.
 
-## Fast loading on immediately.run (auto-cache)
+The board is plain SVG: tap a piece, tap a highlighted target. Promotions get a
+picker, the move list is clickable to review earlier positions, captured
+pieces and the material edge sit next to each player, and the PGN is one click
+away.
 
-immediately.run normally reads your sources from the GitHub API, which is slow
-and rate-limited for anonymous visitors. This template ships a GitHub Action
-([`.github/workflows/cache.yml`](./.github/workflows/cache.yml)) that, on every
-push to `main`, builds a pre-cached zip of your repo and publishes it to your
-repo's **own GitHub Pages**. immediately.run finds it automatically at
-`https://<owner>.github.io/<repo>/cached_repositories/main.zip` and loads from
-there — falling back to the API if it's missing.
+## How data is stored
 
-The cache also embeds a manifest sidecar, so visitors can push edits back to
-GitHub even when the app was loaded from the zip.
-
-### Enable the cache (one-time)
-
-For a repo in your **own** GitHub account or org, there's a single one-time step:
-
-1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
-2. Push to `main` (or re-run the **Cache for immediately.run** workflow from the
-   Actions tab).
-
-That's it — no tokens and no secrets to configure. The workflow builds the zip and
-publishes it to your repo's Pages; immediately.run finds it automatically on the
-next load. The first publish can lag a push by up to ~10 minutes of GitHub Pages
-CDN caching. If the app still loads from the API, check that the workflow run
-succeeded and that Pages shows a green **github-pages** deployment.
-
-> **immediately-run org repos** skip even that step: the org's internal **deploy
-> GitHub App** self-provisions Pages on the first run (it holds Pages +
-> Administration write and its `DEPLOY_APP_ID` / `DEPLOY_APP_PRIVATE_KEY` are org
-> secrets). That App is org-internal — repos outside the org neither have nor need
-> it, and `cache.yml` automatically falls back to the manual step above.
-
-### Always run the newest commit
-
-By default the cached version is served even if it's a few minutes behind
-`main`. If your app must always reflect the very latest commit, add this to
-`package.json`:
-
-```jsonc
-{
-  "immediately.run": {
-    "requireLatest": true
-  }
-}
-```
-
-immediately.run still boots instantly from the cache, then checks in the
-background (one API request) whether the cache is current and, if not, reloads
-from GitHub.
-
-## How it's organized
-
-immediately.run renders the **default export of `src/App.tsx`** — that's the
-entry point, not `main.tsx`.
+Everything is a file under the app's storage, one record per file so that
+several people can write a game without clobbering each other (writes are
+last-write-wins per file).
 
 ```
-src/
-  main.tsx              # local vite dev/build entry only — immediately.run IGNORES this
-  App.tsx               # ROOT: default export + imports the global CSS
-  index.css             # fonts, design tokens (dark + light), resets
-  App.css               # layout + component styles
-  mdx.d.ts              # type shim so `import X from './x.mdx'` works
-  components/           # one default-exported React component per file
-  data/                 # typed data arrays (NO components/JSX here)
-  hooks/                # custom hooks (NO components here)
-  assets/               # images you import, e.g. import logo from './assets/logo.png'
+<root>/games/<gameId>/game.json         written once by the creator: id, mode,
+                                         white, black ('open' | 'engine' | login), created
+<root>/games/<gameId>/seat-black.json   claim of an open seat ({ login, at }); also seat-white.json
+<root>/games/<gameId>/moves/0001.json   one file per half-move: { n, san, fen (after), by, at }
+<root>/games/<gameId>/resign-white.json { by, at }; also resign-black.json
+<root>/games/<gameId>/draw-white.json   draw offer { by, at, ply }; also draw-black.json
 ```
 
-The included page shows the core patterns: a data array mapped to cards
-(`data/features.ts` → `components/Features.tsx`), a custom hook
-(`hooks/useTheme.ts` → `components/ThemeSwitch.tsx`), and local React state
-(`components/Counter.tsx`).
+- Solo games (engine, local) live in the user's **private** app storage
+  (`openSettings()` in the SDK), under `data/games/…`. They show up in the
+  lobby's "Your games" list for resuming.
+- Correspondence games live in a **shared space** under `chess/games/…`. The
+  chosen space id is remembered in the private `data/config.json` and
+  re-mounted at boot with no prompt.
+- The result is never written to `game.json`; it is **derived** from the
+  files: a resignation, an agreed draw (both offers carry the same ply), or
+  what chess.js says about the last position (mate, stalemate, insufficient
+  material, repetition, fifty moves).
+- A draw offer is valid only for the ply it was made at — moving instead of
+  accepting lets it lapse, no extra file needed.
+- Joining a game writes `seat-black.json` (or `seat-white.json`) instead of
+  rewriting `game.json`, so a join can never race the creator's file.
 
-## Filesystem access (`fs`)
+### Multi-user notes
 
-immediately.run apps can read and write a filesystem by importing `fs` (async
-only — `fs.promises.*` and callback style). This template has local-dev support
-for it built in via [`@immediately-run/dev-fs`](https://github.com/immediately-run/dev-fs),
-a Vite plugin (already wired into `vite.config.ts`) that bridges the same
-filesystem to your real local disk during `vite dev`. See that repo for the
-supported API and details.
+- It is your move only when your login holds the side to move and the last
+  move file was written by the opponent.
+- The app cannot invite anyone: share the space itself from the Spaces page on
+  immediately.run. Members with a read-only grant can watch but not move.
+- Spaces have no live change events, so the game screen polls the game's
+  directories every 3 s and the lobby re-reads the games list every 6 s.
+- When the host does not report a login (local dev, some hosts), the lobby
+  asks for a display name, saved privately, and uses it as the seat holder.
 
-```ts
-import fs from 'fs'
-
-await fs.promises.writeFile('/data/notes.txt', 'hello', 'utf8')
-const text = await fs.promises.readFile('/data/notes.txt', 'utf8')
-```
-
-`main.tsx` runs a one-off round-trip smoke test in dev — check the browser
-console for the `[dev-fs]` group, and delete it freely.
-
-## The rules that keep it working on immediately.run
-
-See [`CLAUDE.md`](./CLAUDE.md) for the full list. The essentials:
-
-- **Global CSS is imported from `App.tsx`, never only from `main.tsx`.**
-- **A file that exports a component exports *only* components** — data, consts,
-  and helpers go in `data/`, `hooks/`, or `lib/`. `npm run lint` enforces this.
-- **Pull colors, fonts, radii, and shadows from the tokens in `index.css`**
-  rather than hard-coding values.
-
-## Develop
-
-Requires Node.js 20.19+ or 22.12+.
+## Local development
 
 ```bash
 npm install
-npm run dev      # local dev server
-npm run build    # tsc -b && vite build — must pass with no type errors
-npm run lint     # eslint — enforces the React Fast Refresh / HMR rule
-npm run preview  # serve the production build
+npm run dev      # vite dev; the fs writes to ./devfs-playground (git-ignored)
+npm run build    # tsc + vite build
+npm run lint     # eslint, incl. the React Fast Refresh rule
 ```
+
+Under `vite dev` there is no host: private storage maps to
+`devfs-playground/settings/…` and "Create a shared space" maps to
+`devfs-playground/shared/…`, so you can simulate an opponent by dropping move
+files into the game directory from another terminal.
+
+To run against the real platform without committing, use the CLI:
+`immediately.run dev . --origin https://local.immediately.run`.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

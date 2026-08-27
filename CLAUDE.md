@@ -1,4 +1,12 @@
-# Working in this repo
+# Chess — working in this repo
+
+Correspondence chess without a server: every move is a file in a shared space,
+plus a built-in engine for solo play. See `README.md` for the file layout and
+the multi-user rules. Code map: `src/lib/store.ts` (fs + spaces), `src/lib/games.ts`
+(on-disk game layout), `src/lib/rules.ts` (status derivation on chess.js),
+`src/lib/engine.ts` (chunked negamax), hooks in `src/hooks/`, one component per
+file in `src/components/`. `chess.js` is the only non-platform dependency and is
+pinned exactly (the engine reaches into its private move generator for speed).
 
 This is an **immediately.run app**: React + TypeScript that loads from GitHub and
 transpiles in the browser (no server, no build step at runtime). Keep the rules
