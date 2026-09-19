@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Chess } from '../vendor/chess';
-import type { Square } from '../vendor/chess';
+import { Chess } from 'chess.js';
+import type { Square } from 'chess.js';
 import Board from './Board';
 import type { LegalTarget } from './Board';
 import Captured from './Captured';
