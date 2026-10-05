@@ -74,7 +74,7 @@ export function useGame(store: Store | null, id: string | null, me: string): Liv
     (async () => {
       await reload();
     })();
-    // R3-901: ONE recursive watch on the game dir replaces this hook's two
+    // R3-901: one recursive watch on the game dir replaces this hook's two
     // per-dir polls (moves/ sits under the game dir — the relay reports the
     // changed path, so one watch covers both).
     let stop: (() => void) | null = null;
