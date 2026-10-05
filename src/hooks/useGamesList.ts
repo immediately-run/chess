@@ -3,11 +3,10 @@
 // game does not change the games directory's own listing).
 import { useCallback, useEffect, useState } from 'react';
 import { gamesDir, listGames } from '../lib/games';
-import { pollDir } from '../lib/store';
+import { watchDir } from '../lib/store';
 import type { Store } from '../lib/store';
 import type { GameFiles } from '../lib/types';
 
-const REFRESH_MS = 6000;
 
 export function useGamesList(store: Store | null) {
   const [games, setGames] = useState<GameFiles[]>([]);
@@ -33,12 +32,12 @@ export function useGamesList(store: Store | null) {
     const tick = () => {
       if (!cancelled) void reload();
     };
-    const stop = pollDir(gamesDir(store), tick, 3000);
-    const timer = store.spaceId ? setInterval(tick, REFRESH_MS) : null;
+    // R3-901: ONE recursive watch on games/ replaces the 3 s poll AND the 6 s
+    // interval — the relay reports the changed path; no cadence remains.
+    const stop = watchDir(gamesDir(store), tick);
     return () => {
       cancelled = true;
       stop();
-      if (timer) clearInterval(timer);
     };
   }, [store, reload]);
 

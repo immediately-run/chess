@@ -2,10 +2,10 @@
 // writes, and exposes the write actions (move, claim seat, resign, draw).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Chess } from 'chess.js';
-import { claimSeat, gameDir, movesDir, offerDraw, readGame, resign, withdrawDraw, writeMove } from '../lib/games';
+import { claimSeat, gameDir, offerDraw, readGame, resign, withdrawDraw, writeMove } from '../lib/games';
 import { deriveStatus, isMyMove, myColors, openSeatFor, replay } from '../lib/rules';
 import type { Status } from '../lib/rules';
-import { pollDir } from '../lib/store';
+import { watchDir } from '../lib/store';
 import type { Store } from '../lib/store';
 import type { Color, GameFiles, MoveRecord } from '../lib/types';
 
@@ -35,7 +35,6 @@ export interface LiveGame {
   withdrawDrawAs: (color: Color) => Promise<void>;
 }
 
-const POLL_MS = 3000;
 
 export function useGame(store: Store | null, id: string | null, me: string): LiveGame {
   const [game, setGame] = useState<GameFiles | null>(null);
@@ -74,17 +73,19 @@ export function useGame(store: Store | null, id: string | null, me: string): Liv
     (async () => {
       await reload();
     })();
-    const stops: (() => void)[] = [];
+    // R3-901: ONE recursive watch on the game dir replaces the two per-dir
+    // polls (moves/ sits under the game dir — the relay reports the changed
+    // path, so one move no longer re-reads every game to be noticed).
+    let stop: (() => void) | null = null;
     if (store.spaceId) {
       const tick = () => {
         if (!cancelled) void reload();
       };
-      stops.push(pollDir(movesDir(store, id), tick, POLL_MS));
-      stops.push(pollDir(gameDir(store, id), tick, POLL_MS));
+      stop = watchDir(gameDir(store, id), tick);
     }
     return () => {
       cancelled = true;
-      stops.forEach((s) => s());
+      stop?.();
     };
   }, [store, id, reload]);
 
