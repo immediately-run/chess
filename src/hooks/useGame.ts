@@ -1,11 +1,12 @@
-// One game, live: reads its files, polls the shared space for the opponent's
-// writes, and exposes the write actions (move, claim seat, resign, draw).
+// One game, live: reads its files, WATCHES the shared space for the opponent's
+// writes (R3-901 — the host's watch relay), and exposes the write actions (move,
+// claim seat, resign, draw).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Chess } from 'chess.js';
-import { claimSeat, gameDir, movesDir, offerDraw, readGame, resign, withdrawDraw, writeMove } from '../lib/games';
+import { claimSeat, gameDir, offerDraw, readGame, resign, withdrawDraw, writeMove } from '../lib/games';
 import { deriveStatus, isMyMove, myColors, openSeatFor, replay } from '../lib/rules';
 import type { Status } from '../lib/rules';
-import { pollDir } from '../lib/store';
+import { watchDir } from '../lib/store';
 import type { Store } from '../lib/store';
 import type { Color, GameFiles, MoveRecord } from '../lib/types';
 
@@ -35,7 +36,6 @@ export interface LiveGame {
   withdrawDrawAs: (color: Color) => Promise<void>;
 }
 
-const POLL_MS = 3000;
 
 export function useGame(store: Store | null, id: string | null, me: string): LiveGame {
   const [game, setGame] = useState<GameFiles | null>(null);
@@ -53,7 +53,7 @@ export function useGame(store: Store | null, id: string | null, me: string): Liv
         setMissing(true);
         return;
       }
-      // Never let a poll roll back a move we just wrote and are still flushing.
+      // Never let a watch-triggered reload roll back a move we just wrote and are still flushing.
       const cur = gameRef.current;
       if (cur && cur.meta.id === g.meta.id && g.moves.length < cur.moves.length && writing.current) return;
       gameRef.current = g;
@@ -66,7 +66,7 @@ export function useGame(store: Store | null, id: string | null, me: string): Liv
     }
   }, [store, id]);
 
-  // Initial load + live polling (only shared stores have other writers).
+  // Initial load + the live watch (only shared stores have other writers).
   useEffect(() => {
     if (!store || !id) return;
     let cancelled = false;
@@ -74,17 +74,19 @@ export function useGame(store: Store | null, id: string | null, me: string): Liv
     (async () => {
       await reload();
     })();
-    const stops: (() => void)[] = [];
+    // R3-901: one recursive watch on the game dir replaces this hook's two
+    // per-dir polls (moves/ sits under the game dir — the relay reports the
+    // changed path, so one watch covers both).
+    let stop: (() => void) | null = null;
     if (store.spaceId) {
       const tick = () => {
         if (!cancelled) void reload();
       };
-      stops.push(pollDir(movesDir(store, id), tick, POLL_MS));
-      stops.push(pollDir(gameDir(store, id), tick, POLL_MS));
+      stop = watchDir(gameDir(store, id), tick);
     }
     return () => {
       cancelled = true;
-      stops.forEach((s) => s());
+      stop?.();
     };
   }, [store, id, reload]);
 

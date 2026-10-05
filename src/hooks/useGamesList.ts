@@ -1,13 +1,12 @@
-// The games in one store, kept fresh: poll the games directory for new games
-// and, for shared stores, re-read everything on an interval (a move inside a
-// game does not change the games directory's own listing).
+// The games in one store, kept fresh: one recursive WATCH on the games
+// directory (the relay reports the changed path, so a move inside a game is
+// caught too). No poll, no interval — no cadence remains.
 import { useCallback, useEffect, useState } from 'react';
 import { gamesDir, listGames } from '../lib/games';
-import { pollDir } from '../lib/store';
+import { watchDir } from '../lib/store';
 import type { Store } from '../lib/store';
 import type { GameFiles } from '../lib/types';
 
-const REFRESH_MS = 6000;
 
 export function useGamesList(store: Store | null) {
   const [games, setGames] = useState<GameFiles[]>([]);
@@ -33,12 +32,12 @@ export function useGamesList(store: Store | null) {
     const tick = () => {
       if (!cancelled) void reload();
     };
-    const stop = pollDir(gamesDir(store), tick, 3000);
-    const timer = store.spaceId ? setInterval(tick, REFRESH_MS) : null;
+    // R3-901: one recursive watch on games/ replaces the 3 s poll AND the 6 s
+    // interval — the relay reports the changed path; no cadence remains.
+    const stop = watchDir(gamesDir(store), tick);
     return () => {
       cancelled = true;
       stop();
-      if (timer) clearInterval(timer);
     };
   }, [store, reload]);
 
