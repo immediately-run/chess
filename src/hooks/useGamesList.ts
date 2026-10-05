@@ -1,4 +1,4 @@
-// The games in one store, kept fresh: poll the games directory for new games
+// The games in one store, kept fresh: watch the games directory for new games
 // and, for shared stores, re-read everything on an interval (a move inside a
 // game does not change the games directory's own listing).
 import { useCallback, useEffect, useState } from 'react';

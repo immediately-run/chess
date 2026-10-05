@@ -1,5 +1,6 @@
-// One game, live: reads its files, polls the shared space for the opponent's
-// writes, and exposes the write actions (move, claim seat, resign, draw).
+// One game, live: reads its files, WATCHES the shared space for the opponent's
+// writes (R3-901 — the host's watch relay), and exposes the write actions (move,
+// claim seat, resign, draw).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Chess } from 'chess.js';
 import { claimSeat, gameDir, offerDraw, readGame, resign, withdrawDraw, writeMove } from '../lib/games';
@@ -52,7 +53,7 @@ export function useGame(store: Store | null, id: string | null, me: string): Liv
         setMissing(true);
         return;
       }
-      // Never let a poll roll back a move we just wrote and are still flushing.
+      // Never let a watch-triggered reload roll back a move we just wrote and are still flushing.
       const cur = gameRef.current;
       if (cur && cur.meta.id === g.meta.id && g.moves.length < cur.moves.length && writing.current) return;
       gameRef.current = g;
@@ -65,7 +66,7 @@ export function useGame(store: Store | null, id: string | null, me: string): Liv
     }
   }, [store, id]);
 
-  // Initial load + live polling (only shared stores have other writers).
+  // Initial load + the live watch (only shared stores have other writers).
   useEffect(() => {
     if (!store || !id) return;
     let cancelled = false;

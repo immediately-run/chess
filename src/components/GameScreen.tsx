@@ -28,7 +28,7 @@ function GameScreen({ store, id, me, onBack, onRematch }: Props) {
   const live = useGame(store, id, me);
   const { game, chess, status, mine, myMove, claimable } = live;
   // Selection + promotion are keyed by ply so a new move (ours, the engine's,
-  // or an opponent's arriving by poll) silently invalidates them.
+  // or an opponent's arriving by the watch's reload) silently invalidates them.
   const [sel, setSel] = useState<{ ply: number; square: string } | null>(null);
   const [promoSel, setPromoSel] = useState<{ ply: number; from: string; to: string } | null>(null);
   const [viewPly, setViewPly] = useState<number | null>(null);
